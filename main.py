@@ -6,12 +6,15 @@ from src.eda import (
     purchase_frequency_distribution,
     top_products
 )
-from src.feature_engineering import build_rfm
+from src.feature_engineering import build_rfm, build_churn_features
 from src.segmentation import run_elbow_method, assign_clusters
+from src.churn_model import train_churn_model, evaluate_churn_model, save_churn_model
 
 RAW_DATA_PATH = 'data/raw/online_retail_II.xlsx'
 CLEANED_DATA_PATH = 'data/processed/cleaned_data.csv'
 RFM_PATH = 'data/processed/rfm_features.csv'
+CHURN_FEATURES_PATH = 'data/processed/churn_features.csv'
+CHURN_MODEL_PATH = 'models/churn_model.pkl'
 FIGURES_PATH = 'reports/figures'
 
 
@@ -33,6 +36,13 @@ def main():
     rfm, km = assign_clusters(rfm, rfm_scaled, n_clusters=4, output_path=f'{FIGURES_PATH}/segment_profiles.png')
     rfm.to_csv(RFM_PATH, index=False)
     print(f"Segmentation complete:\n{rfm['Segment'].value_counts().to_string()}")
+
+    churn_features = build_churn_features(df_clean)
+    churn_features.to_csv(CHURN_FEATURES_PATH, index=False)
+    model, X_test, y_test = train_churn_model(churn_features)
+    evaluate_churn_model(model, X_test, y_test, f'{FIGURES_PATH}/churn_confusion_matrix.png')
+    save_churn_model(model, CHURN_MODEL_PATH)
+    print("Churn model saved.")
 
 
 if __name__ == "__main__":
