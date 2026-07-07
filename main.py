@@ -6,15 +6,18 @@ from src.eda import (
     purchase_frequency_distribution,
     top_products
 )
-from src.feature_engineering import build_rfm, build_churn_features
+from src.feature_engineering import build_rfm, build_churn_features, build_clv_features
 from src.segmentation import run_elbow_method, assign_clusters
 from src.churn_model import train_churn_model, evaluate_churn_model, save_churn_model
+from src.clv_model import train_clv_model, evaluate_clv_model, save_clv_model
 
 RAW_DATA_PATH = 'data/raw/online_retail_II.xlsx'
 CLEANED_DATA_PATH = 'data/processed/cleaned_data.csv'
 RFM_PATH = 'data/processed/rfm_features.csv'
 CHURN_FEATURES_PATH = 'data/processed/churn_features.csv'
+CLV_FEATURES_PATH = 'data/processed/clv_features.csv'
 CHURN_MODEL_PATH = 'models/churn_model.pkl'
+CLV_MODEL_PATH = 'models/clv_model.pkl'
 FIGURES_PATH = 'reports/figures'
 
 
@@ -39,10 +42,17 @@ def main():
 
     churn_features = build_churn_features(df_clean)
     churn_features.to_csv(CHURN_FEATURES_PATH, index=False)
-    model, X_test, y_test = train_churn_model(churn_features)
-    evaluate_churn_model(model, X_test, y_test, f'{FIGURES_PATH}/churn_confusion_matrix.png')
-    save_churn_model(model, CHURN_MODEL_PATH)
+    churn_model, X_test_churn, y_test_churn = train_churn_model(churn_features)
+    evaluate_churn_model(churn_model, X_test_churn, y_test_churn, f'{FIGURES_PATH}/churn_confusion_matrix.png')
+    save_churn_model(churn_model, CHURN_MODEL_PATH)
     print("Churn model saved.")
+
+    clv_features = build_clv_features(df_clean)
+    clv_features.to_csv(CLV_FEATURES_PATH, index=False)
+    clv_model, X_test_clv, y_test_clv = train_clv_model(clv_features)
+    evaluate_clv_model(clv_model, X_test_clv, y_test_clv, f'{FIGURES_PATH}/clv_actual_vs_predicted.png')
+    save_clv_model(clv_model, CLV_MODEL_PATH)
+    print("CLV model saved.")
 
 
 if __name__ == "__main__":

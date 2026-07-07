@@ -45,3 +45,34 @@ def build_churn_features(df):
     )
 
     return features
+
+
+def build_clv_features(df):
+    df = df[df['Country'] == 'United Kingdom'].copy()
+
+    snapshot_date = df['InvoiceDate'].max()
+    cutoff_date = snapshot_date - pd.Timedelta(days=90)
+
+    observation_df = df[df['InvoiceDate'] <= cutoff_date]
+    future_df = df[df['InvoiceDate'] > cutoff_date]
+
+    features = observation_df.groupby('Customer ID').agg(
+        Recency=('InvoiceDate', lambda x: (cutoff_date - x.max()).days),
+        Frequency=('Invoice', 'nunique'),
+        Monetary=('TotalPrice', 'sum'),
+        AvgOrderValue=('TotalPrice', 'mean'),
+        Tenure=('InvoiceDate', lambda x: (x.max() - x.min()).days),
+    ).reset_index()
+
+    features['AvgDaysBetweenOrders'] = features.apply(
+        lambda row: row['Tenure'] / row['Frequency'] if row['Frequency'] > 1 else row['Tenure'],
+        axis=1
+    )
+
+    future_revenue = future_df.groupby('Customer ID')['TotalPrice'].sum().reset_index()
+    future_revenue.columns = ['Customer ID', 'CLV']
+
+    features = features.merge(future_revenue, on='Customer ID', how='left')
+    features['CLV'] = features['CLV'].fillna(0)
+
+    return features
