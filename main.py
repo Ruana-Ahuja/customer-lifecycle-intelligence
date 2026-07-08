@@ -11,6 +11,7 @@ from src.segmentation import run_elbow_method, assign_clusters
 from src.churn_model import train_churn_model, evaluate_churn_model, save_churn_model
 from src.clv_model import train_clv_model, evaluate_clv_model, save_clv_model
 from src.shap_explainer import explain_churn_model, explain_clv_model
+from src.sql_analytics import create_database, run_queries
 
 RAW_DATA_PATH = 'data/raw/online_retail_II.xlsx'
 CLEANED_DATA_PATH = 'data/processed/cleaned_data.csv'
@@ -61,6 +62,10 @@ def main():
     explain_churn_model(churn_model, X_test_churn, FIGURES_PATH)
     explain_clv_model(clv_model, X_test_clv, FIGURES_PATH)
     print("SHAP explanations saved.")
+
+    create_database(CLEANED_DATA_PATH, RFM_PATH, CHURN_FEATURES_PATH, CLV_FEATURES_PATH)
+    run_queries()
+    print("\nSQL analytics complete.")
 
 
 if __name__ == "__main__":
