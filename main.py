@@ -10,6 +10,7 @@ from src.feature_engineering import build_rfm, build_churn_features, build_clv_f
 from src.segmentation import run_elbow_method, assign_clusters
 from src.churn_model import train_churn_model, evaluate_churn_model, save_churn_model
 from src.clv_model import train_clv_model, evaluate_clv_model, save_clv_model
+from src.shap_explainer import explain_churn_model, explain_clv_model
 
 RAW_DATA_PATH = 'data/raw/online_retail_II.xlsx'
 CLEANED_DATA_PATH = 'data/processed/cleaned_data.csv'
@@ -36,23 +37,30 @@ def main():
 
     rfm = build_rfm(df_clean)
     rfm_scaled, scaler = run_elbow_method(rfm, output_path=f'{FIGURES_PATH}/elbow_plot.png')
-    rfm, km = assign_clusters(rfm, rfm_scaled, n_clusters=4, output_path=f'{FIGURES_PATH}/segment_profiles.png')
+    rfm, km = assign_clusters(rfm, rfm_scaled, n_clusters=4,
+                              output_path=f'{FIGURES_PATH}/segment_profiles.png')
     rfm.to_csv(RFM_PATH, index=False)
     print(f"Segmentation complete:\n{rfm['Segment'].value_counts().to_string()}")
 
     churn_features = build_churn_features(df_clean)
     churn_features.to_csv(CHURN_FEATURES_PATH, index=False)
     churn_model, X_test_churn, y_test_churn = train_churn_model(churn_features)
-    evaluate_churn_model(churn_model, X_test_churn, y_test_churn, f'{FIGURES_PATH}/churn_confusion_matrix.png')
+    evaluate_churn_model(churn_model, X_test_churn, y_test_churn,
+                         f'{FIGURES_PATH}/churn_confusion_matrix.png')
     save_churn_model(churn_model, CHURN_MODEL_PATH)
     print("Churn model saved.")
 
     clv_features = build_clv_features(df_clean)
     clv_features.to_csv(CLV_FEATURES_PATH, index=False)
     clv_model, X_test_clv, y_test_clv = train_clv_model(clv_features)
-    evaluate_clv_model(clv_model, X_test_clv, y_test_clv, f'{FIGURES_PATH}/clv_actual_vs_predicted.png')
+    evaluate_clv_model(clv_model, X_test_clv, y_test_clv,
+                       f'{FIGURES_PATH}/clv_actual_vs_predicted.png')
     save_clv_model(clv_model, CLV_MODEL_PATH)
     print("CLV model saved.")
+
+    explain_churn_model(churn_model, X_test_churn, FIGURES_PATH)
+    explain_clv_model(clv_model, X_test_clv, FIGURES_PATH)
+    print("SHAP explanations saved.")
 
 
 if __name__ == "__main__":

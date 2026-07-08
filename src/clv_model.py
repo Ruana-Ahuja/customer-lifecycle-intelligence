@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 from xgboost import XGBRegressor
 import joblib
 
@@ -14,7 +16,6 @@ FEATURES = ['Recency', 'Frequency', 'Monetary', 'AvgOrderValue', 'Tenure', 'AvgD
 
 def train_clv_model(features_df):
     active_df = features_df[features_df['CLV'] > 0].copy()
-
     clv_cap = active_df['CLV'].quantile(0.95)
     active_df = active_df[active_df['CLV'] <= clv_cap].copy()
 
@@ -25,23 +26,26 @@ def train_clv_model(features_df):
         X, y, test_size=0.2, random_state=42
     )
 
-    model = XGBRegressor(
-        n_estimators=300,
-        max_depth=4,
-        learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        random_state=42,
-        verbosity=0
-    )
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('model', XGBRegressor(
+            n_estimators=300,
+            max_depth=4,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            random_state=42,
+            verbosity=0
+        ))
+    ])
 
-    model.fit(X_train, y_train)
+    pipeline.fit(X_train, y_train)
 
-    return model, X_test, y_test
+    return pipeline, X_test, y_test
 
 
-def evaluate_clv_model(model, X_test, y_test, output_path):
-    y_pred_log = model.predict(X_test)
+def evaluate_clv_model(pipeline, X_test, y_test, output_path):
+    y_pred_log = pipeline.predict(X_test)
 
     y_pred = np.expm1(y_pred_log)
     y_actual = np.expm1(y_test)
@@ -67,5 +71,5 @@ def evaluate_clv_model(model, X_test, y_test, output_path):
     return y_pred
 
 
-def save_clv_model(model, path):
-    joblib.dump(model, path)
+def save_clv_model(pipeline, path):
+    joblib.dump(pipeline, path)
