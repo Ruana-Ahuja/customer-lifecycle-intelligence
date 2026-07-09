@@ -1,3 +1,5 @@
+**Live Dashboard:** [Customer Lifecycle Intelligence Platform](https://customer-lifecycle-intelligence-iz9biuue45lgtp5xkoe29t.streamlit.app/)
+
 # Customer Lifecycle Intelligence Platform
 
 An end-to-end Data Science solution built on real retail transaction data to segment customers, predict churn, forecast customer lifetime value, and explain model decisions using SHAP.
